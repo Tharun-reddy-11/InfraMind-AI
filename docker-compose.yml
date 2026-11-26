@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-inframind}
+      MYSQL_USER: ${MYSQL_USER:-inframind_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-inframind_app_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    ports: ["3306:3306"]
+    volumes: ["mysql_data:/var/lib/mysql"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+  ml-service:
+    build: ./ml-service
+    environment:
+      DATASETS_DIR: /datasets
+      ARTIFACTS_DIR: /app/artifacts
+    volumes:
+      - ./Datasets:/datasets:ro
+      - ./ml-service/artifacts:/app/artifacts
+    ports: ["8000:8000"]
+  backend:
+    build: ./backend
+    depends_on:
+      mysql: { condition: service_healthy }
+      ml-service: { condition: service_started }
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-inframind}?createDatabaseIfNotExist=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-inframind_app}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-inframind_app_password}
+      JWT_SECRET: ${JWT_SECRET:-local-development-secret-must-be-over-32-characters}
+      ML_SERVICE_URL: http://ml-service:8000
+    ports: ["8080:8080"]
+  frontend:
+    build: ./frontend
+    depends_on: [backend]
+    ports: ["5173:80"]
+volumes:
+  mysql_data:

@@ -1,0 +1,25 @@
+spring:
+  application: { name: inframind-api }
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/inframind?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:Tharun@1126}
+  jpa: { open-in-view: false }
+  flyway: { enabled: true }
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+app:
+  jwt-secret: ${JWT_SECRET:local-development-secret-must-be-over-32-characters}
+  jwt-hours: ${JWT_HOURS:8}
+  ml-service-url: ${ML_SERVICE_URL:http://localhost:8000}
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    ai.inframind: DEBUG
